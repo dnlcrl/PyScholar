@@ -5,15 +5,13 @@ This module provides classes for querying Google Scholar and parsing
 returned results. It currently *only* processes the first results
 page. It is not a recursive crawler.
 """
-
-import os
+import time
 from utils import ScholarConf, ScholarUtils, encode
 from parser import ScholarArticleParser120726
 from excepts import QueryArgumentError
-
-from urllib2 import Request, build_opener, HTTPCookieProcessor
 from urllib import quote, unquote
-from cookielib import MozillaCookieJar
+import pdb
+from selenium import webdriver
 
 
 class ScholarQuery(object):
@@ -313,21 +311,8 @@ class ScholarQuerier(object):
     def __init__(self):
         self.articles = []
         self.query = None
-        self.cjar = MozillaCookieJar()
+        self.firefox = webdriver.Firefox()
 
-        # If we have a cookie file, load it:
-        if ScholarConf.COOKIE_JAR_FILE and \
-           os.path.exists(ScholarConf.COOKIE_JAR_FILE):
-            try:
-                self.cjar.load(ScholarConf.COOKIE_JAR_FILE,
-                               ignore_discard=True)
-                ScholarUtils.log('info', 'loaded cookies file')
-            except Exception as msg:
-                ScholarUtils.log(
-                    'warn', 'could not load cookies file: %s' % msg)
-                self.cjar = MozillaCookieJar()  # Just to be safe
-
-        self.opener = build_opener(HTTPCookieProcessor(self.cjar))
         self.settings = None  # Last settings object, if any
 
     def apply_settings(self, settings):
@@ -343,26 +328,30 @@ class ScholarQuerier(object):
         # contents of the Settings pane HTML in order to extract
         # hidden fields before we can compose the query for updating
         # the settings.
-        html = self._get_http_response(url=self.GET_SETTINGS_URL,
-                                       log_msg='dump of settings form HTML',
-                                       err_msg='requesting settings failed')
-        if html is None:
-            return False
+
+        self.firefox.get(self.GET_SETTINGS_URL)
+        #html = self.firefox.page_source()
+        # log_msg='dump of settings form HTML',
+        # err_msg='requesting settings failed')
+        # if html is None:
+        #     return False
 
         # Now parse the required stuff out of the form. We require the
         # "scisig" token to make the upload of our settings acceptable
         # to Google.
-        soup = BeautifulSoup(html)
+        #soup = BeautifulSoup(html)
 
-        tag = soup.find(name='form', attrs={'id': 'gs_settings_form'})
+        tag = self.firefox.find_element_by_id('gs_settings_form')
+        #tag = soup.find(name='form', attrs={'id': 'gs_settings_form'})
         if tag is None:
             ScholarUtils.log('info', 'parsing settings failed: no form')
             return False
 
-        tag = tag.find('input', attrs={'type': 'hidden', 'name': 'scisig'})
+        tag = [x for x in self.firefox.find_elements_by_tag_name('input') if x.get_attribute(
+            'type') == 'hidden' and x.get_attribute('name') == 'scisig'][0]
         if tag is None:
             ScholarUtils.log('info', 'parsing settings failed: scisig')
-            return False
+        #     return False
 
         urlargs = {'start': settings.starting_number,
                    'scisig': tag['value'],
@@ -374,9 +363,8 @@ class ScholarQuerier(object):
             urlargs['scis'] = 'yes'
             urlargs['scisf'] = '&scisf=%d' % settings.citform
 
-        html = self._get_http_response(url=self.SET_SETTINGS_URL % urlargs,
-                                       log_msg='dump of settings result HTML',
-                                       err_msg='applying setttings failed')
+        self.firefox.get(self.SET_SETTINGS_URL % urlargs)
+
         if html is None:
             print 'html is None'
             return False
@@ -397,7 +385,6 @@ class ScholarQuerier(object):
                                        err_msg='results retrieval failed')
         if html is None:
             return
-
         self.parse(html)
 
     def get_citation_data(self, article):
@@ -436,22 +423,6 @@ class ScholarQuerier(object):
         """Clears any existing articles stored from previous queries."""
         self.articles = []
 
-    def save_cookies(self):
-        """
-        This stores the latest cookies we're using to disk, for reuse in a
-        later session.
-        """
-        if ScholarConf.COOKIE_JAR_FILE is None:
-            return False
-        try:
-            self.cjar.save(ScholarConf.COOKIE_JAR_FILE,
-                           ignore_discard=True)
-            ScholarUtils.log('info', 'saved cookies file')
-            return True
-        except Exception as msg:
-            ScholarUtils.log('warn', 'could not save cookies file: %s' % msg)
-            return False
-
     def _get_http_response(self, url, log_msg=None, err_msg=None):
         """
         Helper method, sends HTTP request and returns response payload.
@@ -463,21 +434,23 @@ class ScholarQuerier(object):
         try:
             ScholarUtils.log('info', 'requesting %s' % unquote(url))
 
-            req = Request(
-                url=url, headers={'User-Agent': ScholarConf.USER_AGENT})
-            hdl = self.opener.open(req)
-            html = hdl.read()
+            text = 'Please show you\'re not a robot'
+            text2 = 'Per continuare, digita i caratteri nell\'immagine sottostante:'
+            while True:
+                self.firefox.get(url)
+                time.sleep(1)
+                html = self.firefox.page_source.encode('utf-8')
+                if text in html or text2 in html:
+                    pdb.set_trace()
+                    html = self.firefox.page_source.encode('utf-8')
+                break
 
             ScholarUtils.log('debug', log_msg)
             ScholarUtils.log('debug', '>>>>' + '-'*68)
-            ScholarUtils.log('debug', 'url: %s' % hdl.geturl())
-            ScholarUtils.log('debug', 'result: %s' % hdl.getcode())
-            ScholarUtils.log('debug', 'headers:\n' + str(hdl.info()))
-            # For Python 3
             ScholarUtils.log('debug', 'data:\n' + html.decode('utf-8'))
             ScholarUtils.log('debug', '<<<<' + '-'*68)
 
             return html
         except Exception as err:
-            ScholarUtils.log('info', err_msg + ': %s' % err)
+            print err
             return None

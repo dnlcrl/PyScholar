@@ -6,6 +6,7 @@ import json
 from excepts import FormatError
 
 
+
 class ScholarSettings(object):
 
     """
@@ -131,12 +132,14 @@ def csv(querier, header=False, sep='|'):
 json_results = []
 
 
-def to_json(querier):
+def to_json(querier, file_name='../res.json'):
     print 'adding ' + str(len(querier.articles)) + ' articles to json list'
     print 'total articles in json list: ' + str(len(json_results))
     for art in querier.articles:
         json_results.append(
             {key: art.attrs[key][0] for key in art.attrs.keys()})
+    with open(file_name, 'wb') as f:
+        json.dump(json_results, f)
 
 
 def citation_export(querier):
@@ -160,8 +163,3 @@ def output_query(options, querier):
     if options.cookie_file:
         querier.save_cookies()
 
-
-def close_if_json(options, file_name='../res.json'):
-    if options.json:
-        with open(file_name, 'wb') as f:
-            json.dump(json_results, f)

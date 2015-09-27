@@ -250,7 +250,7 @@ class ScholarArticleParser120726(ScholarArticleParser):
                     year = self.year_re.findall(
                         tag.find('div', {'class': 'gs_a'}).text)
                     self.article['year'] = year[0] if len(year) > 0 else None
-                    #self.article['authors'] = tag.find('div', {'class': 'gs_a'}).text.split[year[0]][0] if len(year) > 0 else None
+                    self.article['authors'] = tag.find('div', {'class': 'gs_a'}).text.split(year[0])[0].strip(', .') if len(year) > 0 else None
 
                 if tag.find('div', {'class': 'gs_fl'}):
                     self._parse_links(tag.find('div', {'class': 'gs_fl'}))
