@@ -1,3 +1,12 @@
+# OS X cache file
+.DS_Store
+
+# Thumbnails
+._*
+
+# Saved jsons
+*.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
