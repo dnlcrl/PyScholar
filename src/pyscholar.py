@@ -8,7 +8,7 @@ import re
 from utils import ScholarUtils, ScholarSettings, ScholarConf, output_query, reset_res
 from query import ClusterScholarQuery, SearchScholarQuery, ScholarQuerier
 import json
-
+import pdb
 
 def loop(options, query, querier, file_name='../res.json'):
     if options.start is not None:
@@ -18,20 +18,23 @@ def loop(options, query, querier, file_name='../res.json'):
     if options.count is not None:
         if options.count > ScholarConf.MAX_PAGE_RESULTS:
             total = options.count
+            count = options.count
+            start = options.start
             done = 0
             try:
                 while done < total:
-                    options.count = min(
+                    count = min(
                         total-done, ScholarConf.MAX_PAGE_RESULTS)
-                    query.set_starting_number(options.start)
-                    query.set_num_page_results(options.count)
+                    query.set_starting_number(start)
+                    query.set_num_page_results(count)
                     querier.send_query(query)
                     time.sleep(1)
                     output_query(options, querier, file_name)
-                    options.start += ScholarConf.MAX_PAGE_RESULTS
-                    done += options.count
+                    start += ScholarConf.MAX_PAGE_RESULTS
+                    done += count
             except Exception, e:
                 print e
+                pdb.set_trace()
             finally:
                 return 0
         query.set_num_page_results(options.count)
@@ -198,20 +201,21 @@ scholar.py -c 5 -a "albert einstein" -t --none "quantum theory" --after 1970"""
         try:
             with open(options.urls) as data_file:
                 urls = json.load(data_file)
+            if isinstance(urls, list) and len(urls) > 0 and isinstance(urls[0], dict):
+                urls = [x['url_citations'] for x in urls]
             for url in urls:
                 query.set_url(url)
                 reset_res()
-                loop(options, query, querier, file_name=re.match(
-                    '.*?([0-9]+)', url).group(1) + '.json')
+                loop(options, query, querier, file_name='../results/' +
+                     re.match('.*?([0-9]+)', url).group(1) + '.json')
         except Exception, e:
             import pdb
             pdb.set_trace()
             print e
             print 'error with the urls json file provided'
-
-    loop(options, query, querier)
+    else:
+        loop(options, query, querier)
     querier.quit()
-
     return 0
 
 if __name__ == "__main__":

@@ -132,7 +132,7 @@ class ClusterScholarQuery(ScholarQuery):
         self.cluster = ScholarUtils.ensure_int(cluster, msg)
 
     def set_url(self, url):
-        self.SCHOLAR_CLUSTER_URL = url + '&' + args
+        self.SCHOLAR_CLUSTER_URL = url + '&' + self.args
 
     def get_url(self):
         if self.cluster is None:
@@ -330,7 +330,6 @@ class ScholarQuerier(object):
             self.firefox = webdriver.Firefox(profile)
         except Exception, e:
             print e
-            import pdb; pdb.set_trace()
             self.firefox = webdriver.Firefox()
 
         self.settings = None  # Last settings object, if any
@@ -374,10 +373,6 @@ class ScholarQuerier(object):
             urlargs['scisf'] = '&scisf=%d' % settings.citform
 
         self.firefox.get(self.SET_SETTINGS_URL % urlargs)
-
-        if html is None:
-            print 'html is None'
-            return False
 
         ScholarUtils.log('info', 'settings applied')
         return True
@@ -466,7 +461,6 @@ class ScholarQuerier(object):
             return None
 
     def quit(self):
-        import pdb; pdb.set_trace()
         if path.exists(FF_PROFILE_PATH):
             rmtree(FF_PROFILE_PATH)
         copytree(self.firefox.profile.path, FF_PROFILE_PATH)
