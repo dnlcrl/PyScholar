@@ -6,7 +6,6 @@ import json
 from excepts import FormatError
 
 
-
 class ScholarSettings(object):
 
     """
@@ -115,10 +114,10 @@ def txt(querier, with_globals):
 
 
 def encode(s):
-        if isinstance(s, basestring):
-            return s.encode('utf-8')  # pylint: disable-msg=C0103
-        else:
-            return str(s)
+    if isinstance(s, basestring):
+        return s.encode('utf-8')  # pylint: disable-msg=C0103
+    else:
+        return str(s)
 
 
 def csv(querier, header=False, sep='|'):
@@ -148,9 +147,9 @@ def citation_export(querier):
         print(art.as_citation() + '\n')
 
 
-def output_query(options, querier):
+def output_query(options, querier, file_name):
     if options.json:
-        to_json(querier)
+        to_json(querier, file_name)
     elif options.csv:
         csv(querier)
     elif options.csv_header:
@@ -162,4 +161,3 @@ def output_query(options, querier):
 
     if options.cookie_file:
         querier.save_cookies()
-

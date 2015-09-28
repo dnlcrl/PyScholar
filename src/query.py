@@ -109,10 +109,10 @@ class ClusterScholarQuery(ScholarQuery):
     This version just pulls up an article cluster whose ID we already
     know about.
     """
-    SCHOLAR_CLUSTER_URL = ScholarConf.SCHOLAR_SITE + '/scholar?' \
-        + 'start=%(num)s' \
+    args = 'start=%(num)s' \
         + '&cluster=%(cluster)s' \
         + '&num=%(num)s'
+    SCHOLAR_CLUSTER_URL = ScholarConf.SCHOLAR_SITE + '/scholar?' + args
 
     def __init__(self, cluster=None):
         ScholarQuery.__init__(self)
@@ -126,6 +126,9 @@ class ClusterScholarQuery(ScholarQuery):
         """
         msg = 'cluster ID must be numeric'
         self.cluster = ScholarUtils.ensure_int(cluster, msg)
+
+    def set_url(self, url):
+        SCHOLAR_CLUSTER_URL = url + '&' + args
 
     def get_url(self):
         if self.cluster is None:
@@ -146,8 +149,7 @@ class SearchScholarQuery(ScholarQuery):
     This version represents the search query parameters the user can
     configure on the Scholar website, in the advanced search options.
     """
-    SCHOLAR_QUERY_URL = ScholarConf.SCHOLAR_SITE + '/scholar?' \
-        + 'start=%(start)s' \
+    args = 'start=%(start)s' \
         + '&as_q=%(words)s' \
         + '&as_epq=%(phrase)s' \
         + '&as_oq=%(words_some)s' \
@@ -160,8 +162,8 @@ class SearchScholarQuery(ScholarQuery):
         + '&as_sdt=%(patents)s%%2C5' \
         + '&as_vis=%(citations)s' \
         + '&btnG=&hl=en' \
-        + '&num=%(num)s'\
-
+        + '&num=%(num)s'
+    SCHOLAR_QUERY_URL = ScholarConf.SCHOLAR_SITE + '/scholar?' + args
 
     def __init__(self):
         ScholarQuery.__init__(self)
@@ -177,6 +179,7 @@ class SearchScholarQuery(ScholarQuery):
         self.timeframe = [None, None]
         self.include_patents = True
         self.include_citations = True
+        self.url = None
 
     def set_words(self, words):
         """Sets words that *all* must be found in the result."""
@@ -226,11 +229,18 @@ class SearchScholarQuery(ScholarQuery):
     def set_include_patents(self, yesorno):
         self.include_patents = yesorno
 
+    def set_url(self, url):
+        self.url = url
+        if not url.startswith(ScholarConf.SCHOLAR_SITE):
+            raise QueryArgumentError('The provided url is not valid')
+        self.SCHOLAR_QUERY_URL = url + '&' + self.args
+
     def get_url(self):
         if self.words is None and self.words_some is None \
            and self.words_none is None and self.phrase is None \
            and self.author is None and self.pub is None \
-           and self.timeframe[0] is None and self.timeframe[1] is None:
+           and self.timeframe[0] is None and self.timeframe[1] is None \
+           and self.url is None:
             raise QueryArgumentError('search query needs more parameters')
 
         # If we have some-words or none-words lists, we need to

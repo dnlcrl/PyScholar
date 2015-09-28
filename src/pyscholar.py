@@ -4,8 +4,41 @@
 import optparse
 import sys
 import time
+import re
 from utils import ScholarUtils, ScholarSettings, ScholarConf, output_query
 from query import ClusterScholarQuery, SearchScholarQuery, ScholarQuerier
+
+
+def loop(options, query, querier, file_name='../res.json'):
+    if options.start is not None:
+        #options.start = min(options.count, ScholarConf.MAX_PAGE_RESULTS)
+        query.set_starting_number(options.start)
+
+    if options.count is not None:
+        if options.count > ScholarConf.MAX_PAGE_RESULTS:
+            total = options.count
+            done = 0
+            try:
+                while done < total:
+                    options.count = min(
+                        total-done, ScholarConf.MAX_PAGE_RESULTS)
+                    query.set_starting_number(options.start)
+                    query.set_num_page_results(options.count)
+                    querier.send_query(query)
+                    output_query(options, querier, file_name)
+                    time.sleep(1)
+                    options.start += ScholarConf.MAX_PAGE_RESULTS
+                    done += options.count
+            except Exception, e:
+                print e
+            finally:
+                querier.firefox.quit()
+                return 0
+        query.set_num_page_results(options.count)
+
+    querier.send_query(query)
+    output_query(options, querier, file_name)
+    querier.firefox.quit()
 
 
 def main():
@@ -56,6 +89,10 @@ scholar.py -c 5 -a "albert einstein" -t --none "quantum theory" --after 1970"""
                      help='Maximum number of results')
     group.add_option('-S', '--start', type='int', default=0,
                      help='Starting page of results')
+    group.add_option('-u', '--url', metavar='URL', default=0,
+                     help='Citation list\'s url')
+    group.add_option('-U', '--urls_file', metavar='URL', dest='urls', default=0,
+                     help='Citation list\'s urls json file ([\'http: // scholar.google.com/scholar?cites=4412725301034017472 & as_sdt=2005 & sciodt=1, 5 & hl=en\', ...])')
     parser.add_option_group(group)
 
     group = optparse.OptionGroup(parser, 'Output format',
@@ -155,33 +192,15 @@ scholar.py -c 5 -a "albert einstein" -t --none "quantum theory" --after 1970"""
         if options.no_citations:
             query.set_include_citations(False)
 
-    if options.start is not None:
-        #options.start = min(options.count, ScholarConf.MAX_PAGE_RESULTS)
-        query.set_starting_number(options.start)
+    if options.url is not None:
+        query.set_url(options.url)
 
-    if options.count is not None:
-        if options.count > ScholarConf.MAX_PAGE_RESULTS:
-            total = options.count
-            done = 0
-            try:
-                while done < total:
-                    options.count = min(
-                        total-done, ScholarConf.MAX_PAGE_RESULTS)
-                    query.set_starting_number(options.start)
-                    query.set_num_page_results(options.count)
-                    querier.send_query(query)
-                    output_query(options, querier)
-                    time.sleep(1)
-                    options.start += ScholarConf.MAX_PAGE_RESULTS
-                    done += options.count
-            except Exception, e:
-                print e
-            finally:
-                return 0
-        query.set_num_page_results(options.count)
+    if options.urls is not None:
+        for url in options.urls:
+            query.set_url(url)
+            loop(options, query, querier, file_name=re.match('.*?([0-9]+)', url).group(1))
 
-    querier.send_query(query)
-    output_query(options, querier)
+    loop(options, query, querier)
     return 0
 
 if __name__ == "__main__":
