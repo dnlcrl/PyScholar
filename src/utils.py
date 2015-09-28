@@ -5,6 +5,8 @@ import sys
 import json
 from excepts import FormatError
 
+json_results = []
+
 
 class ScholarSettings(object):
 
@@ -128,7 +130,8 @@ def csv(querier, header=False, sep='|'):
         header = False
 
 
-json_results = []
+def reset_res():
+    del json_results[:]
 
 
 def to_json(querier, file_name='../res.json'):

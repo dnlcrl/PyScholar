@@ -4,6 +4,9 @@
 # Thumbnails
 ._*
 
+#Cookies 
+*.pkl
+
 # Saved jsons
 *.json
 

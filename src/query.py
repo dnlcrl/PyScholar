@@ -12,7 +12,11 @@ from excepts import QueryArgumentError
 from urllib import quote, unquote
 import pdb
 from selenium import webdriver
+from selenium.webdriver.firefox.webdriver import FirefoxProfile
+from os import path
+from shutil import copytree, rmtree
 
+FF_PROFILE_PATH = '../ffprofile'
 
 class ScholarQuery(object):
 
@@ -128,7 +132,7 @@ class ClusterScholarQuery(ScholarQuery):
         self.cluster = ScholarUtils.ensure_int(cluster, msg)
 
     def set_url(self, url):
-        SCHOLAR_CLUSTER_URL = url + '&' + args
+        self.SCHOLAR_CLUSTER_URL = url + '&' + args
 
     def get_url(self):
         if self.cluster is None:
@@ -321,7 +325,13 @@ class ScholarQuerier(object):
     def __init__(self):
         self.articles = []
         self.query = None
-        self.firefox = webdriver.Firefox()
+        try:
+            profile = FirefoxProfile(FF_PROFILE_PATH)
+            self.firefox = webdriver.Firefox(profile)
+        except Exception, e:
+            print e
+            import pdb; pdb.set_trace()
+            self.firefox = webdriver.Firefox()
 
         self.settings = None  # Last settings object, if any
 
@@ -340,16 +350,6 @@ class ScholarQuerier(object):
         # the settings.
 
         self.firefox.get(self.GET_SETTINGS_URL)
-        #html = self.firefox.page_source()
-        # log_msg='dump of settings form HTML',
-        # err_msg='requesting settings failed')
-        # if html is None:
-        #     return False
-
-        # Now parse the required stuff out of the form. We require the
-        # "scisig" token to make the upload of our settings acceptable
-        # to Google.
-        #soup = BeautifulSoup(html)
 
         tag = self.firefox.find_element_by_id('gs_settings_form')
         #tag = soup.find(name='form', attrs={'id': 'gs_settings_form'})
@@ -464,3 +464,10 @@ class ScholarQuerier(object):
         except Exception as err:
             print err
             return None
+
+    def quit(self):
+        import pdb; pdb.set_trace()
+        if path.exists(FF_PROFILE_PATH):
+            rmtree(FF_PROFILE_PATH)
+        copytree(self.firefox.profile.path, FF_PROFILE_PATH)
+        self.firefox.quit()

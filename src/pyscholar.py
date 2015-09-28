@@ -5,8 +5,9 @@ import optparse
 import sys
 import time
 import re
-from utils import ScholarUtils, ScholarSettings, ScholarConf, output_query
+from utils import ScholarUtils, ScholarSettings, ScholarConf, output_query, reset_res
 from query import ClusterScholarQuery, SearchScholarQuery, ScholarQuerier
+import json
 
 
 def loop(options, query, querier, file_name='../res.json'):
@@ -25,20 +26,18 @@ def loop(options, query, querier, file_name='../res.json'):
                     query.set_starting_number(options.start)
                     query.set_num_page_results(options.count)
                     querier.send_query(query)
-                    output_query(options, querier, file_name)
                     time.sleep(1)
+                    output_query(options, querier, file_name)
                     options.start += ScholarConf.MAX_PAGE_RESULTS
                     done += options.count
             except Exception, e:
                 print e
             finally:
-                querier.firefox.quit()
                 return 0
         query.set_num_page_results(options.count)
 
     querier.send_query(query)
     output_query(options, querier, file_name)
-    querier.firefox.quit()
 
 
 def main():
@@ -89,7 +88,7 @@ scholar.py -c 5 -a "albert einstein" -t --none "quantum theory" --after 1970"""
                      help='Maximum number of results')
     group.add_option('-S', '--start', type='int', default=0,
                      help='Starting page of results')
-    group.add_option('-u', '--url', metavar='URL', default=0,
+    group.add_option('-u', '--url', metavar='URL', default=None,
                      help='Citation list\'s url')
     group.add_option('-U', '--urls_file', metavar='URL', dest='urls', default=0,
                      help='Citation list\'s urls json file ([\'http: // scholar.google.com/scholar?cites=4412725301034017472 & as_sdt=2005 & sciodt=1, 5 & hl=en\', ...])')
@@ -196,11 +195,23 @@ scholar.py -c 5 -a "albert einstein" -t --none "quantum theory" --after 1970"""
         query.set_url(options.url)
 
     if options.urls is not None:
-        for url in options.urls:
-            query.set_url(url)
-            loop(options, query, querier, file_name=re.match('.*?([0-9]+)', url).group(1))
+        try:
+            with open(options.urls) as data_file:
+                urls = json.load(data_file)
+            for url in urls:
+                query.set_url(url)
+                reset_res()
+                loop(options, query, querier, file_name=re.match(
+                    '.*?([0-9]+)', url).group(1) + '.json')
+        except Exception, e:
+            import pdb
+            pdb.set_trace()
+            print e
+            print 'error with the urls json file provided'
 
     loop(options, query, querier)
+    querier.quit()
+
     return 0
 
 if __name__ == "__main__":
