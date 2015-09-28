@@ -458,6 +458,7 @@ class ScholarQuerier(object):
             return html
         except Exception as err:
             print err
+            pdb.set_trace()
             return None
 
     def quit(self):

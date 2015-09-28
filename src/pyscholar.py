@@ -29,6 +29,8 @@ def loop(options, query, querier, file_name='../res.json'):
                     query.set_num_page_results(count)
                     querier.send_query(query)
                     time.sleep(1)
+                    if len(querier.articles) == 0:
+                        break
                     output_query(options, querier, file_name)
                     start += ScholarConf.MAX_PAGE_RESULTS
                     done += count
