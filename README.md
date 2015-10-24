@@ -1,5 +1,5 @@
 # PyScholar
-A "supervised" parser for Google Scholar, written in Python
+A "supervised" parser for Google Scholar, written in Python.
 
 PyScholar is a command line tool written in python that implements a querier and parser for Google Scholar's output. This project is inspired by scholar.py, in fact there is a lot of code from that project, the main difference is that scholar.py makes use of the urllib modules, thus, so no javascript, and given that people at big G don't like you to scrape their search results, when the server responses the "I'm not a robot" page, you simply get no output from scholar.py, for a long time. Instead PyScholar makes use of selenium webdriver giving the ability to see what's going on and in case the "I'm not a robot" shows up you can simply pass the challenge manually and let the scraper continue his job.
 
