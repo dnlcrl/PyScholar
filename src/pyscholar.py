@@ -95,7 +95,7 @@ scholar.py -c 5 -a "albert einstein" -t --none "quantum theory" --after 1970"""
                      help='Starting page of results')
     group.add_option('-u', '--url', metavar='URL', default=None,
                      help='Citation list\'s url')
-    group.add_option('-U', '--urls_file', metavar='URL', dest='urls', default=0,
+    group.add_option('-U', '--urls_file', metavar='URL', dest='urls', default=None,
                      help='Citation list\'s urls json file ([\'http: // scholar.google.com/scholar?cites=4412725301034017472 & as_sdt=2005 & sciodt=1, 5 & hl=en\', ...])')
     parser.add_option_group(group)
 
@@ -198,21 +198,23 @@ scholar.py -c 5 -a "albert einstein" -t --none "quantum theory" --after 1970"""
 
     if options.url is not None:
         query.set_url(options.url)
+        print options.url
 
     if options.urls is not None:
+        print options.urls
         try:
             with open(options.urls) as data_file:
                 urls = json.load(data_file)
             if isinstance(urls, list) and len(urls) > 0 and isinstance(urls[0], dict):
                 urls = [x['url_citations'] for x in urls]
+                print '2'
             for url in urls:
+                print '3'
                 query.set_url(url)
                 reset_res()
                 loop(options, query, querier, file_name='../results/' +
                      re.match('.*?([0-9]+)', url).group(1) + '.json')
         except Exception, e:
-            import pdb
-            pdb.set_trace()
             print e
             print 'error with the urls json file provided'
     else:
