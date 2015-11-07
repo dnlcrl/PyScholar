@@ -46,6 +46,7 @@ def loop(options, query, querier, file_name='../res.json'):
 
 
 def main():
+    print ""
     usage = """scholar.py [options] <query string>
 A command-line interface to Google Scholar.
 
@@ -207,16 +208,14 @@ scholar.py -c 5 -a "albert einstein" -t --none "quantum theory" --after 1970"""
                 urls = json.load(data_file)
             if isinstance(urls, list) and len(urls) > 0 and isinstance(urls[0], dict):
                 urls = [x['url_citations'] for x in urls]
-                print '2'
             for url in urls:
-                print '3'
                 query.set_url(url)
                 reset_res()
                 loop(options, query, querier, file_name='../results/' +
                      re.match('.*?([0-9]+)', url).group(1) + '.json')
         except Exception, e:
             print e
-            print 'error with the urls json file provided'
+
     else:
         loop(options, query, querier)
     querier.quit()

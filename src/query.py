@@ -328,8 +328,9 @@ class ScholarQuerier(object):
         try:
             profile = FirefoxProfile(FF_PROFILE_PATH)
             self.firefox = webdriver.Firefox(profile)
+
         except Exception, e:
-            print e
+
             self.firefox = webdriver.Firefox()
 
         self.settings = None  # Last settings object, if any
