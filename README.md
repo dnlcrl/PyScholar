@@ -7,7 +7,7 @@ Also there are some other new features I inclulded from my scholar.py fork, that
 
 I also removed Python 3 support, sorry.
 
-I include here the original [scholar.py](https://github.com/ckreibich/scholar.py)'s README.md content, changelog and license (change "scholar.py" with "pyscholar.py" in the commands below in order to make it work):
+**I include here the original [scholar.py](https://github.com/ckreibich/scholar.py)'s README.md content, changelog and license (change "scholar.py" with "pyscholar.py" in the commands below in order to make it work):**
 
 scholar.py is a Python module that implements a querier and parser for Google Scholar's output. Its classes can be used independently, but it can also be invoked as a command-line tool.
 
