@@ -1,3 +1,5 @@
+![Project frozen](https://img.shields.io/badge/status-frozen-blue.png) ![Project unmaintained](https://img.shields.io/badge/project-unmaintained-red.svg)
+
 # PyScholar
 A "supervised" parser for Google Scholar, written in Python.
 
